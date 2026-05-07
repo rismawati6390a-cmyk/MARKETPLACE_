@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="icon" type="image/x-icon" href="/ProjectPenjualanDaging/img/logo.png" />
+
+    <title>RS-SHOOP</title>
+
+    <style>
+      .effect-totop {
+        transform: translateY(0);
+        transition: 0.3s all ease;
+      }
+      .effect-totop:hover {
+        transform: translateY(-10px);
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <script>
+      let keranjang = [];
+
+      function tambahKeranjang(nama, harga) {
+        const index = keranjang.findIndex((item) => item.nama === nama);
+        if (index !== -1) {
+          keranjang[index].jumlah++;
+        } else {
+          keranjang.push({ nama: nama, harga: harga, jumlah: 1 });
+        }
+        updateUI();
+      }
+
+      function ubahJumlah(index, aksi) {
+        if (aksi === 'tambah') {
+          keranjang[index].jumlah++;
+        } else {
+          keranjang[index].jumlah--;
+          if (keranjang[index].jumlah < 1) {
+            hapusItem(index);
+            return;
+          }
+        }
+        updateUI();
+      }
+
+      function hapusItem(index) {
+        keranjang.splice(index, 1);
+        updateUI();
+      }
+
+      function updateUI() {
+        const cartCount = document.getElementById('cart-count');
+        const listKeranjang = document.getElementById('list-keranjang');
+        const totalHargaElement = document.getElementById('total-harga');
+
+        const totalItem = keranjang.reduce((acc, item) => acc + item.jumlah, 0);
+        cartCount.innerText = totalItem;
+
+        listKeranjang.innerHTML = '';
+        let totalHarga = 0;
+
+        keranjang.forEach((item, index) => {
+          const subtotal = item.harga * item.jumlah;
+          totalHarga += subtotal;
+
+          listKeranjang.innerHTML += `
+          <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+            <div>
+              <h6 class="mb-0">${item.nama}</h6>
+              <small class="text-muted">Rp ${item.harga.toLocaleString()} x ${item.jumlah}</small>
+            </div>
+            <div class="d-flex align-items-center">
+              <div class="btn-group btn-group-sm me-3">
+                <button class="btn btn-outline-secondary" onclick="ubahJumlah(${index}, 'kurang')">-</button>
+                <button class="btn btn-outline-secondary" disabled>${item.jumlah}</button>
+                <button class="btn btn-outline-secondary" onclick="ubahJumlah(${index}, 'tambah')">+</button>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="hapusItem(${index})"><i class="bi bi-trash"></i></button>
+            </div>
+          </div>
+          `;
+        });
+
+        totalHargaElement.innerText = `Rp ${totalHarga.toLocaleString()}`;
+      }
+
+      function checkoutWA() {
+        if (keranjang.length === 0) {
+          alert('Keranjang masih kosong!');
+          return;
+        }
+
+        const nama = document.getElementById('nama').value;
+        const alamat = document.getElementById('alamat').value;
+        const nohp = document.getElementById('nohp').value;
+
+        if (!nama || !alamat || !nohp) {
+          alert('Lengkapi data pembeli!');
+          return;
+        }
+
+        let pesan = 'Halo, saya ingin memesan:%0A%0A';
+        let total = 0;
+
+        keranjang.forEach((item) => {
+          const subtotal = item.harga * item.jumlah;
+          total += subtotal;
+          pesan += `- ${item.nama} (${item.jumlah}x) = Rp ${subtotal.toLocaleString()}%0A`;
+        });
+
+        pesan += `%0ATotal: Rp ${total.toLocaleString()}%0A`;
+        pesan += `%0AData Pembeli:%0A`;
+        pesan += `Nama: ${nama}%0AAlamat: ${alamat}%0ANo HP: ${nohp}`;
+
+        const noAdmin = '081526805136'; // GANTI NOMOR
+        window.open(`https://wa.me/${noAdmin}?text=${pesan}`, '_blank');
+
+        keranjang = [];
+        updateUI();
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalKeranjang'));
+        modal.hide();
+      }
+    </script>
+
+    <!-- MODAL -->
+    <div class="modal fade" id="modalKeranjang">
+      <div class="modal-dialog modal-md">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5><i class="bi bi-cart3"></i> Keranjang Belanja</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div id="list-keranjang"></div>
+
+            <hr />
+            <h6>Data Pembeli</h6>
+            <input id="nama" class="form-control mb-2" placeholder="Nama" />
+            <input id="alamat" class="form-control mb-2" placeholder="Alamat" />
+            <input id="nohp" class="form-control mb-2" placeholder="No HP" />
+          </div>
+
+          <div class="modal-footer d-flex justify-content-between">
+            <strong>Total: <span id="total-harga">Rp 0</span></strong>
+            <button class="btn btn-success" onclick="checkoutWA()">Checkout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+          <img src="/RISMA-SHOPPING_files/LOGO.png" class="rounded-circle bg-white me-2" style="height: 45px" />
+          RHSM-FARM
+        </a>
+
+        <div class="mx-auto order-1 order-lg-2" style="width: 50%">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="cari produk"/>
+            <button type="button" class="btn btn-light">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="order-2">
+        <button class="btn btn-light position-relative" data-bs-toggle="modal" data-bs-target="#modalKeranjang">
+          <i class="bi bi-cart3"></i>
+          <span id="cart-count" class="badge bg-warning text-dark position-absolute top-0 start-100 translate-middle">0</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+    <div class="container py-4">
+      <h2 class="mb-4">Daftar Produk</h2>
+      <div class="btn-group mb-4">
+        <button type="button" class="btn btn-outline-primary active">Semua</button>
+        <button type="button" class="btn btn-outline-primary">Daging Ayam</button>
+        <button type="button" class="btn btn-outline-primary">Daging Sapi</button>
+        <button type="button" class="btn btn-outline-primary">Daging Kambing</button>
+        <button type="button" class="btn btn-outline-primary">Daging Kuda</button>
+        <button type="button" class="btn btn-outline-primary">Telur Ayam</button>
+        <button type="button" class="btn btn-outline-primary">Susu Kambing</button>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-4 col-lg-4 effect-totop">
+          <div class="card h-100 shadow-sm">
+            <img src="/RISMA-SHOPPING_files/img1.png" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h6 class="card-title text-truncate py-1">Daging Ayam</h6>
+              <p class="card-text fw-bold text-danger fs-5">Rp 50.000 / Kg</p>
+              <span class="badge bg-secondary">Daging</span>
+
+              <button class="btn btn-primary w-100 mt-2" onclick="tambahKeranjang('Daging Ayam', 50000)"><i class="bi bi-cart-plus"></i> Tambah ke Keranjang</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 col-lg-4 effect-totop">
+          <div class="card h-100 shadow-sm">
+            <img src="/RISMA-SHOPPING_files/img2.png" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h6 class="card-title text-truncate py-1">Daging Sapi</h6>
+              <p class="card-text fw-bold text-danger fs-5">Rp 125.000 / Kg</p>
+              <span class="badge bg-secondary">Daging</span>
+              <button class="btn btn-primary w-100 mt-2" onclick="tambahKeranjang('Daging Sapi', 125000)"><i class="bi bi-cart-plus"></i> Tambah ke Keranjang</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 col-lg-4 effect-totop">
+          <div class="card h-100 shadow-sm">
+            <img src="/RISMA-SHOPPING_files/img3.png" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h6 class="card-title text-truncate py-1">Daging Kambing</h6>
+              <p class="card-text fw-bold text-danger fs-5">Rp 130.000 /Kg</p>
+              <span class="badge bg-secondary">Daging</span>
+              <button class="btn btn-primary w-100 mt-2" onclick="tambahKeranjang('Daging Kambing', 150000)"><i class="bi bi-cart-plus"></i> Tambah ke Keranjang</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 col-lg-4 effect-totop">
+          <div class="card h-100 shadow-sm">
+            <img src="/RISMA-SHOPPING_files/img4.png" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h6 class="card-title text-truncate py-1">Daging Kuda</h6>
+              <p class="card-text fw-bold text-danger fs-5">Rp 160.000 / Kg</p>
+              <span class="badge bg-secondary">Daging</span>
+              <button class="btn btn-primary w-100 mt-2" onclick="tambahKeranjang('Daging Kuda', 180000)"><i class="bi bi-cart-plus"></i> Tambah ke Keranjang</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 col-lg-4 effect-totop">
+          <div class="card h-100 shadow-sm">
+            <img src="/RISMA-SHOPPING_files/img5.png" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h6 class="card-title text-truncate py-1">Daging slice</h6>
+              <p class="card-text fw-bold text-danger fs-5">Rp 35.000 / 250Gram</p>
+              <span class="badge bg-secondary">Daging</span>
+
+              <button class="btn btn-primary w-100 mt-2" onclick="tambahKeranjang('Daging Slice', 35000)"><i class="bi bi-cart-plus"></i> Tambah ke Keranjang</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 col-lg-4 effect-totop">
+          <div class="card h-100 shadow-sm">
+            <img src="/RISMA-SHOPPING_files/img6.png" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h6 class="card-title text-truncate py-1">Susu Sapi</h6>
+              <p class="card-text fw-bold text-danger fs-5">Rp 10.000 / Rak</p>
+              <span class="badge bg-secondary">Susu</span>
+
+              <button class="btn btn-primary w-100 mt-2" onclick="tambahKeranjang('Susu Sapi', 10000)"><i class="bi bi-cart-plus"></i> Tambah ke Keranjang</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 col-lg-4 effect-totop">
+          <div class="card h-100 shadow-sm">
+            <img src="/RISMA-SHOPPING_files/img7.png" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h6 class="card-title text-truncate py-1">Susu Kambing</h6>
+              <p class="card-text fw-bold text-danger fs-5">Rp 10.000 / 250Ml</p>
+              <span class="badge bg-secondary">Susu</span>
+
+              <button class="btn btn-primary w-100 mt-2" onclick="tambahKeranjang('Susu Kambing', 10000)"><i class="bi bi-cart-plus"></i> Tambah ke Keranjang</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 col-lg-4 effect-totop">
+          <div class="card h-100 shadow-sm">
+            <img src="/RISMA-SHOPPING_files/img8.png" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h6 class="card-title text-truncate py-1">Telur Ayam</h6>
+              <p class="card-text fw-bold text-danger fs-5">Rp 50.000 / 250Ml</p>
+              <span class="badge bg-secondary">Telur</span>
+
+              <button class="btn btn-primary w-100 mt-2" onclick="tambahKeranjang('Telur Ayam', 50000)"><i class="bi bi-cart-plus"></i> Tambah ke Keranjang</button>
+            </div>
+          </div>
+        </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
